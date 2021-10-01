@@ -96,8 +96,23 @@ workflows:
       # - node/test
       - site-deploy:
           context: rally-test-context
+          project_name: moz-fx-data-rall-nonprod-ac2a
+          service_account: $GSA_KEY
           requires:
             - build-and-test
           filters:
             branches:
-              only: deploy
+              only: master
+#      - hold:
+#          type: approval
+#          requires:
+#            - site-deploy
+#      - site-deploy:
+#          context: rally-test-context
+#          project_name: moz-fx-data-rally-w-prod-dfa4
+#          service_account: $GSA_KEY
+#          requires:
+#            - hold
+#          filters:
+#            branches:
+#              only: deploy
