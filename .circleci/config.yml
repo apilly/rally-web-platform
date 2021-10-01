@@ -91,7 +91,7 @@ jobs:
         default: rally-web-stage
       service_key:
         type: string
-        default: $GCLOUD_SERVICE_KEY
+        default: $GCLOUD_STAGE_SERVICE_KEY
     docker:
       - image: cimg/node:15.1
     steps:
@@ -127,18 +127,18 @@ workflows:
             - build-and-test
           filters:
             branches:
-              only: deploy
+              only: master
 
       - site-deploy:
           context: rally-web
           project_name: $PROJECT_ID_STAGE
-          project_config: apilly-sandbox-project-dev
-          service_key: $GCLOUD_SERVICE_KEY
+          project_config: rally-web-stage
+          service_key: $GCLOUD_STAGE_SERVICE_KEY
           requires:
             - deploy-branch-update
           filters:
             branches:
-              only: deploy
+              only: master
 #      - hold:
 #          type: approval
 #          requires:
