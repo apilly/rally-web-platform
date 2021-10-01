@@ -125,10 +125,6 @@ workflows:
       - deploy-branch-update:
           requires:
             - build-and-test
-          filters:
-            branches:
-              only: master
-
       - site-deploy:
           context: rally-web
           project_name: $PROJECT_ID_STAGE
@@ -138,7 +134,7 @@ workflows:
             - deploy-branch-update
           filters:
             branches:
-              only: master
+              only: deploy
 #      - hold:
 #          type: approval
 #          requires:
