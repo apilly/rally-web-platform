@@ -1,5 +1,3 @@
-# Use the latest 2.1 version of CircleCI pipeline process engine.
-# See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
 
 orbs:
@@ -55,15 +53,18 @@ jobs:
       - store_artifacts:
           path: ./screenshots
 
-  # This deploys directly to our dev site at https://apilly-sandbox-project-dev.app
+  # This deploys directly to our dev site at https://rally-web-stage.nonprod.dataops.mozgcp.net
   site-deploy:
     parameters:
       project_name:
         type: string
-        default: apilly-sandbox-project-dev
-      service_account:
+        default: $PROJECT_ID_STAGE
+      project_config:
         type: string
-        default: $GSA_DEV_KEY
+        default: rally-web-stage
+      service_key:
+        type: string
+        default: $GCLOUD_SERVICE_KEY
     docker:
       - image: cimg/node:15.1
     steps:
@@ -73,13 +74,13 @@ jobs:
           command: git checkout deploy && git pull --rebase origin deploy
       - run:
           name: Create Service Account key JSON.
-          command: echo << parameters.service_account >> | base64 --decode --ignore-garbage > "$HOME"/gcloud.json
+          command: echo << parameters.service_key >> | base64 --decode --ignore-garbage > "$HOME"/gcloud.json
       - run:
           name: Install Firebase Tools needed for deploy.
           command: npm install firebase-tools firebase-functions
       - run:
           name: Configure Firebase for the deployment project name.
-          command: GOOGLE_APPLICATION_CREDENTIALS="$HOME"/gcloud.json ./node_modules/.bin/firebase use --add << parameters.project_name >> && cp config/firebase.config.<< parameters.project_name >>.json build/firebase.config.json
+          command: GOOGLE_APPLICATION_CREDENTIALS="$HOME"/gcloud.json ./node_modules/.bin/firebase use --add << parameters.project_name >> && cp config/firebase.config.<< parameters.project_config >>.json build/firebase.config.json
       - run:
           name: Firebase Deploy.
           command: GOOGLE_APPLICATION_CREDENTIALS="$HOME"/gcloud.json ./node_modules/.bin/firebase deploy --project << parameters.project_name >>
@@ -95,24 +96,28 @@ workflows:
       # For running simple node tests, you could optionally use the node/test job from the orb to replicate and replace the job above in fewer lines.
       # - node/test
       - site-deploy:
-          context: rally-test-context
-          project_name: moz-fx-data-rall-nonprod-ac2a
-          service_account: $GSA_KEY
+          context: rally-web
+          project_name: $PROJECT_ID_STAGE
+          project_config: apilly-sandbox-project-dev
+          service_key: $GCLOUD_SERVICE_KEY
           requires:
             - build-and-test
           filters:
             branches:
-              only: master
+              only: deploy
 #      - hold:
 #          type: approval
 #          requires:
 #            - site-deploy
 #      - site-deploy:
-#          context: rally-test-context
-#          project_name: moz-fx-data-rally-w-prod-dfa4
-#          service_account: $GSA_KEY
+#          context: rally-web
+#          project_name: $PROJECT_ID_PROD
+#           project_config: rally-web-prod
+#          service_account: $GCLOUD_SERVICE_KEY
 #          requires:
 #            - hold
 #          filters:
+#            tags:
+#              only: /.*/
 #            branches:
-#              only: deploy
+#              only: master
